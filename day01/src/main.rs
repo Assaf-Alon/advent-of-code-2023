@@ -16,7 +16,9 @@ fn get_spelled_digit_helper(line: &str, spelled_digit: &str, reverse: bool) -> u
 }
 
 fn get_first_spelled_digit(line: &str, reverse: bool) -> (u32, usize) {
-    let spelled_digits = vec!["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+    let spelled_digits = vec![
+        "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+    ];
     let mut first_digit = 0;
     let mut first_index = usize::MAX;
     if reverse {
@@ -26,7 +28,11 @@ fn get_first_spelled_digit(line: &str, reverse: bool) -> (u32, usize) {
     for spelled_digit in spelled_digits {
         digit_value += 1;
         let digit_index = get_spelled_digit_helper(line, spelled_digit, reverse);
-        if digit_index < usize::MAX && (first_index == usize::MAX || (!reverse && first_index > digit_index) || (reverse && first_index < digit_index)) {
+        if digit_index < usize::MAX
+            && (first_index == usize::MAX
+                || (!reverse && first_index > digit_index)
+                || (reverse && first_index < digit_index))
+        {
             first_digit = digit_value;
             first_index = digit_index;
         }
@@ -40,7 +46,6 @@ fn get_first_value(line: &str, reverse: bool) -> u32 {
     println!("{}", first_spelled_digit_index);
     for (index, character) in line.chars().enumerate() {
         if character.is_digit(10) {
-            
             if index < first_spelled_digit_index && !reverse {
                 println!("First value: {}", character.to_digit(10).unwrap());
                 return character.to_digit(10).unwrap();
@@ -68,7 +73,8 @@ fn get_calibration_value_from_line(line: &str) -> u32 {
 }
 
 fn main() {
-    let content: String = fs::read_to_string(INPUT_FILE_PATH).expect("Failed to read file content :/");
+    let content: String =
+        fs::read_to_string(INPUT_FILE_PATH).expect("Failed to read file content :/");
     let mut sum: u32 = 0;
 
     for line in content.lines() {
@@ -78,7 +84,7 @@ fn main() {
         println!("{}", num_from_line);
     }
     println!("Sum: {}", sum); // Sum: 54676
-    // 54736 Option 1
-    // 54676 > Correct option
-    // 53928 Option 2
+                              // 54736 Option 1
+                              // 54676 > Correct option
+                              // 53928 Option 2
 }

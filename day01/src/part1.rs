@@ -3,7 +3,6 @@ use std::fs;
 const INPUT_FILE_PATH: &str = "input.txt";
 
 fn get_first_digit(line: &str, reverse: bool) -> u32 {
-
     let digit = if reverse {
         line.chars().rev().find(|c: &char| c.is_digit(10))
     } else {
@@ -23,7 +22,8 @@ fn get_calibration_value_from_line(line: &str) -> u32 {
 }
 
 fn main() {
-    let content: String = fs::read_to_string(INPUT_FILE_PATH).expect("Failed to read file content :/");
+    let content: String =
+        fs::read_to_string(INPUT_FILE_PATH).expect("Failed to read file content :/");
     let mut sum: u32 = 0;
 
     for line in content.lines() {
