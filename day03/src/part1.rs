@@ -81,22 +81,22 @@ fn main() {
 
     let content_as_vectors = multiline_string_to_2d_vector(&content);
 
-    let mut row = 0;
-    for a in content_as_vectors.clone() {
-        let mut col = 0;
-        println!("Currently scanning row: {:?}", a);
-        for b in a.clone().into_iter() {
-            if b.is_digit(10) && is_first_digit(a.clone(), col) {
-                println!("{} is the first digit!", b);
-                let part_number = return_part_number_or_zero(&content_as_vectors, row, col);
+    let mut row_num = 0;
+    for row in content_as_vectors.clone() {
+        let mut col_num = 0;
+        println!("Currently scanning row: {:?}", row);
+        for current_char in row.clone().into_iter() {
+            if current_char.is_digit(10) && is_first_digit(row.clone(), col_num) {
+                println!("{} is the first digit!", current_char);
+                let part_number = return_part_number_or_zero(&content_as_vectors, row_num, col_num);
                 sum += part_number;
                 if part_number > 0 {
                     println!("Found an actual part number - {}", part_number);
                 }
             }
-            col += 1;
+            col_num += 1;
         }
-        row += 1;
+        row_num += 1;
     }
     println!("Sum: {}", sum); // Sum: 527369
 }
