@@ -17,7 +17,6 @@ fn get_seeds(line: &str) -> Vec<u64> {
     let mut seeds_vec = Vec::new();
     let mut index = 0;
     while index < line.len() {
-        println!("Entered loop with index = {}", index);
         let number: u64;
         (number, index) = get_full_number_and_end_index(only_seeds, index);
         if number == 0 {
@@ -56,10 +55,8 @@ fn get_all_mappings(content: &str) -> Vec<Vec<(u64, u64, u64)>> {
         }
         line_index += 1;
         let mut current_line = new_content[line_index];
-        println!("Found map {}", line_index);
         let mut mappings: Vec<(u64, u64, u64)> = Vec::new();
         while line_index < new_content.len() && !current_line.is_empty() {
-            println!("{current_line}");
             let (dst_start, start_index) = get_full_number_and_end_index(current_line, 0);
             let (src_start, start_index) =
                 get_full_number_and_end_index(current_line, start_index + 2);
@@ -80,13 +77,11 @@ fn main() {
         fs::read_to_string(INPUT_FILE_PATH).expect("Failed to read file content :/");
     let seeds_line = content.lines().next().unwrap();
     let mut seeds: Vec<u64> = get_seeds(seeds_line);
-    println!("{:?}", seeds);
 
     let all_mappings = get_all_mappings(&content);
     for mapping in all_mappings {
         println!("Started with {:?}", seeds);
         for i in 0..seeds.len() {
-            // println!("Mapped {} to {}", seeds[i], map_x_to_y(seeds[i], &mapping));
             seeds[i] = map_x_to_y(seeds[i], &mapping);
         }
         println!("Ended with {:?}", seeds);
