@@ -1,13 +1,11 @@
 use phf::phf_map;
 use std::fmt;
-use std::fmt::Display;
 use std::{collections::HashMap, fs};
 
 const INPUT_FILE_PATH: &str = "input.txt";
 
 #[derive(PartialEq, PartialOrd, Eq, Ord)]
 enum HandTypes {
-    NoHand,
     HighCard,
     OnePair,
     TwoPairs,
@@ -19,7 +17,7 @@ enum HandTypes {
 
 static SYMBOL_TO_VALUE: phf::Map<&'static str, u32> = phf_map! {
     "T" => 10,
-    "J" => 11,
+    "J" => 1,
     "Q" => 12,
     "K" => 13,
     "A" => 14,
@@ -35,7 +33,6 @@ impl fmt::Display for HandTypes {
             HandTypes::TwoPairs => write!(f, "Two Pairs"),
             HandTypes::OnePair => write!(f, "One Pair"),
             HandTypes::HighCard => write!(f, "High Card"),
-            _ => write!(f, "ERROR?"),
         }
     }
 }
@@ -73,10 +70,20 @@ fn get_hand_strength(hand: &str) -> (HandTypes, u32) {
         *hand_as_map.entry(card_value).or_insert(0) += 1;
     }
 
-    // 5, 4, 3, 2, 1
+    let num_jokers = *hand_as_map.get(&1).unwrap_or(&0);
+    if num_jokers > 0 {
+        hand_as_map.remove_entry(&1);
+    }
+
     let mut hand_type: HandTypes = HandTypes::HighCard;
     let mut sorted_values = hand_as_map.values().cloned().collect::<Vec<i32>>();
     sorted_values.sort_by(|a, b| b.cmp(a));
+
+    if num_jokers == 5 {
+        sorted_values.push(5);
+    } else if num_jokers > 0 {
+        sorted_values[0] += num_jokers;
+    }
 
     match sorted_values[0] {
         5 => hand_type = HandTypes::FiveOfKind,
@@ -106,24 +113,37 @@ fn main() {
     let content: String =
         fs::read_to_string(INPUT_FILE_PATH).expect("Failed to read file content :/");
 
-    let mut full_hand_data: Vec<(HandTypes, u32, u32)> = Vec::new();
+    let mut full_hand_data: Vec<(HandTypes, u32, u32, &str)> = Vec::new();
 
     for line in content.lines() {
         let (hand, bid) = get_hand_and_bid_from_line(line);
-        println!("Hand: {},  Bid: {}", hand, bid);
+        // println!("Hand: {},  Bid: {}", hand, bid);
         let hand_strength = get_hand_strength(hand);
-        println!(" > Strength: {}", hand_strength.0);
-        full_hand_data.push((hand_strength.0, hand_strength.1, bid));
+        // println!(" > Strength: {}", hand_strength.0);
+        full_hand_data.push((hand_strength.0, hand_strength.1, bid, hand));
     }
 
     let mut total_winnings = 0;
     full_hand_data.sort();
     for (index, hand_data) in full_hand_data.iter().enumerate() {
-        println!(
-            "Hand #{} - {}, {}, {}",
-            index, hand_data.0, hand_data.1, hand_data.2
-        );
         total_winnings += ((index + 1) as u32) * hand_data.2;
+        println!(
+            "Hand #{} - {}, {}, {}, {}. Total: {}",
+            index + 1,
+            hand_data.0,
+            hand_data.1,
+            hand_data.2,
+            hand_data.3,
+            total_winnings
+        );
+        // println!(
+        //     "Adding {} to winning. current: {}",
+        //     ((index + 1) as u32) * hand_data.2,
+        //     total_winnings
+        // )
     }
-    println!("Total winnings: {total_winnings}"); // 251287184
+    println!("Total winnings: {total_winnings}");
 }
+
+// TOO HIGH: 250765012
+//           250757288
