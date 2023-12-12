@@ -1,10 +1,23 @@
-use std::{collections::VecDeque, fs};
+use std::{
+    collections::{HashMap, VecDeque},
+    fs,
+};
 
 const EXAMPLE1_FILE_PATH: &str = "example1.txt";
 const INPUT_FILE_PATH: &str = "input.txt";
 const EMPTY_SYMBOL: char = '.';
 const UNKNOWN_SYMOBL: char = '?';
 const SPRING_SYMBOL: char = '#';
+
+// Convert the vectors to a number so that it'd be hashable
+fn vectors_to_key(numbers: &mut VecDeque<i32>, chars: &mut VecDeque<char>) -> (i128, String) {
+    let mut number: i128 = 0;
+    for n in numbers {
+        number = number * 16 + *n as i128;
+    }
+    let ret_str: String = chars.iter().collect();
+    (number, ret_str)
+}
 
 fn get_numbers_from_line(line: &str) -> VecDeque<i32> {
     let numbers: VecDeque<i32> = line
@@ -51,7 +64,28 @@ fn get_amount_of_springs(line: &VecDeque<char>) -> i32 {
     return springs;
 }
 
-fn get_possible_arrangements(numbers: &mut VecDeque<i32>, line: &mut VecDeque<char>) -> i32 {
+fn get_possible_arrangements_aux(
+    numbers: &mut VecDeque<i32>,
+    line: &mut VecDeque<char>,
+    dp_cache: &mut HashMap<(i128, String), i128>,
+) -> i128 {
+    let pre_key = vectors_to_key(numbers, line);
+    let &cached_value = dp_cache.get(&pre_key).unwrap_or(&-1);
+    let arrangements: i128;
+    if cached_value == -1 {
+        arrangements = get_possible_arrangements(numbers, line, dp_cache);
+        dp_cache.insert(pre_key, arrangements);
+    } else {
+        arrangements = cached_value;
+    }
+    return arrangements;
+}
+
+fn get_possible_arrangements(
+    numbers: &mut VecDeque<i32>,
+    line: &mut VecDeque<char>,
+    dp_cache: &mut HashMap<(i128, String), i128>,
+) -> i128 {
     // Stop condition 1
     if numbers.is_empty() {
         // There are still springs, even though the numbers state otherwise
@@ -81,7 +115,15 @@ fn get_possible_arrangements(numbers: &mut VecDeque<i32>, line: &mut VecDeque<ch
     // No option here, keep going
     if line[0] == EMPTY_SYMBOL {
         line.pop_front();
-        let arrangements = get_possible_arrangements(numbers, line);
+        let pre_key = vectors_to_key(numbers, line);
+        let &cached_value = dp_cache.get(&pre_key).unwrap_or(&-1);
+        let arrangements: i128;
+        if cached_value == -1 {
+            arrangements = get_possible_arrangements_aux(numbers, line, dp_cache);
+            dp_cache.insert(pre_key, arrangements);
+        } else {
+            arrangements = cached_value;
+        }
         line.push_front(EMPTY_SYMBOL);
         return arrangements;
     }
@@ -91,7 +133,7 @@ fn get_possible_arrangements(numbers: &mut VecDeque<i32>, line: &mut VecDeque<ch
     // Put '.' instead of '?'
     if line[0] == UNKNOWN_SYMOBL {
         line.pop_front();
-        let possible_from_here = get_possible_arrangements(numbers, line);
+        let possible_from_here = get_possible_arrangements_aux(numbers, line, dp_cache);
         total_possible_arrangements += possible_from_here;
         line.push_front(UNKNOWN_SYMOBL);
     }
@@ -111,7 +153,7 @@ fn get_possible_arrangements(numbers: &mut VecDeque<i32>, line: &mut VecDeque<ch
         }
 
         numbers.pop_front();
-        total_possible_arrangements += get_possible_arrangements(numbers, line);
+        total_possible_arrangements += get_possible_arrangements_aux(numbers, line, dp_cache);
         numbers.push_front(first_number);
         *line = backup_line.to_owned(); // Restore line for later usage
     } else if line[0] == SPRING_SYMBOL {
@@ -122,13 +164,14 @@ fn get_possible_arrangements(numbers: &mut VecDeque<i32>, line: &mut VecDeque<ch
     total_possible_arrangements
 }
 
-fn solve_day12(file_path: &str, is_part_two: bool) -> i32 {
+fn solve_day12(file_path: &str, is_part_two: bool) -> i128 {
     let content: String = fs::read_to_string(file_path).expect("Failed to read file content :/");
     let mut total_possible_arrangements = 0;
     for line in content.lines() {
         println!("Line: {}", line);
         let mut numbers: VecDeque<i32> = get_numbers_from_line(line);
         let mut line_as_vec: VecDeque<char> = line.split(' ').nth(0).unwrap().chars().collect();
+        let mut dp_cache: HashMap<(i128, String), i128> = HashMap::new();
         if is_part_two {
             let original_line = line_as_vec.clone();
             let original_numbers = numbers.clone();
@@ -140,7 +183,7 @@ fn solve_day12(file_path: &str, is_part_two: bool) -> i32 {
         }
         println!(" > Used numbers: {:?}", numbers);
         println!(" > Used line:    {:?}", line_as_vec);
-        let arrangements = get_possible_arrangements(&mut numbers, &mut line_as_vec);
+        let arrangements = get_possible_arrangements(&mut numbers, &mut line_as_vec, &mut dp_cache);
         println!(" > Arrangements: {}", arrangements);
         total_possible_arrangements += arrangements;
     }
@@ -180,5 +223,11 @@ mod tests {
     fn check_input_p1() {
         let result = solve_day12(INPUT_FILE_PATH, false);
         assert_eq!(result, 7032);
+    }
+
+    #[test]
+    fn check_input_p2() {
+        let result = solve_day12(INPUT_FILE_PATH, false);
+        assert_eq!(result, 1493340882140);
     }
 }
